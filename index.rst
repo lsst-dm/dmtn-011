@@ -63,15 +63,19 @@ The great3-public repository (https://github.com/barnabytprowe/great3-public) pr
 
 Test Setup A:
 ^^^^^^^^^^^^
+The original Great3Sims default configuration produced a test of 2 million galaxies (see Setup B). In some of our early tests, the subfields were smaller (1024 galaxies) and of constant shear angle. The shear angle was then varied by creating a large number of subfield with different shear angles. 
+
+The absolute value of the applied shear was varied in 6 steps from .0001 to .05.
+
+These tests varied in size, from as few as 128 subfields to as many as 2048. 
+
+Test Setup B:
+^^^^^^^^^^^^
 This galaxy sample was the same as that used for the control branch of the Great3sims tests. The Great3sims "control/ground/constantâ" branch creates images for 200 subfields, each with a constant shear and shear angle.  There are 10000 galaxies in each subfield. 
 
 This setup has 2 million galaxies, and is basically a single sample which was used for all of our comparisons.  However, it is possible to modify this test for different Psf assumptions.  One difference is in the seeing conditions (0.5, 0.7, and 0.9 arcseconds) and filter (f2 or f3) used by PhoSim.  Another variation is to either hold the Psf constant over the entire focal plane, or allow it to vary according to atmosphere and telescope optics.
 
 One important modification to Great3Sims was to allow the point spread function for each galaxy to be sampled from our PhoSim Library described above. These Psf images were typically 67x67 pixels at the LSST plate scale. The fits image was given to GalSim using the InterpolatedImage input type.
-
-Test Setup B:
-^^^^^^^^^^^^
-In some of our early tests, we made the subfields smaller (1024 galaxies), but made the number of subfields larger (1024 subfields for each shear value).  This was done in an attempt to sample the error in the absolute value of the shear.  Some of these early tests were also larger (6 million or 12 million galaxies), which made our tests more sensitive, but possibly not realistic.
 
 Using GalSim:
 -------------------------
@@ -146,7 +150,7 @@ These are a set of tests which are intended to test ShapeletPsfApprox(SPA), and 
 Test setup
 --------------
 
-Test Setup A (2 million galaxies)
+Test Setup B (2 million galaxies)
 
 Psf: filter f2 and "raw seeing" 0.7 arcsecs
 
@@ -207,3 +211,45 @@ However, it does appear that the order 2 parameterizations are significantly dif
 
 It is obvious that a lot depends on our error assumptions. In future studies, we should create several populations of the same setup to make true variation easier to determine.  Varying the Psf from point-to-point on the focal plane may also have an effect which we have not studied in this set of tests.
 
+Testing CModel Configurations
+========================
+Our earliest tests were tests of the CModel algorithm, leaving the SPA for Psf estimation at its defaults.  CModel is a shape measurement algorithm in the meas_modelfit package of the DM Stack. This study was done partly to see the effects varying the CModel task config, and partly to determine how large a galaxy sample was required.
+
+As a result of these these tests, we decided to move our tests for single host, multi-core machines at Davis to the computing farm at SLAC. 
+
+Test setup
+--------------
+
+Test Setup A (1-12 million galaxies) at 6 values of shear.
+
+Psf: filter f3 and "raw seeing" 0.7 arcsecs.  Psf varied over the focal plane (all 21 rafts x 9 sensors/raft)
+
+Error estimation increased by as indicated by subfield variation. No bootstraps were run.
+
+Test Descriptions:
+--------------
+The goal of these tests was to demonstrate the effect of different the CModel measurement configurations on the shear bias. 
+
+These tests were done using Test Setup A. 
+
+Initially, the test was done with 128 subfields at 6 shear values (.0001, .01, .02, .03, .04, .06).  This is a total of about 6 x 128 x 1024 = 786432 galaxies.
+
+Where these tests did not show enough sensitivity, tests of 1024 subfields and 2048 subfield were used (6 and 12 million galaxies).
+
+nGrowFootprint Test:
+^^^^^^^^^^^^^^^^^^^
+
+In this test, the nGrowFootprint configuration of CModel was varied from 0 to 10.
+(add reference to initial test DM-3375 and later test DM-????)
+
+nInitialRadii Test:
+^^^^^^^^^^^^^^^^^^^
+
+In this test, the nInitialRadii configuration of CModel was varied from 0 to 15.
+(add reference to initial test DM-3376 and later test DM-????)
+
+Stampsize Test:
+^^^^^^^^^^^^^^^^^^^
+
+In this test, the galaxy stampsize was varied from 20 to 64.  The original galaxy postage stamps created by GalSim were 96x96 at the LSST plate scale.  The stampsize test was to feed CModel smaller postage stamps by trimming the edges of each galaxy image.
+(add reference to test DM-1135 and later test DM-????)
