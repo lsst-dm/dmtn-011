@@ -38,9 +38,9 @@
 
 :tocdepth: 1
 
-This document summarizes the work that was done to test the accuracy of shear measurement using the measurement algorithms in the DM package meas_modelfit.git.  This package contains the Python package lsst.meas.modelfit, which houses both the CModel algorithm -- used to measure galaxy shapes, and the ShapeletPsfApprox Algorithm (SPA) -- used to create a parameterized model of the point spread function (Psf).
+This document describes a framework which was created to test how well shape measurement algorithms in the DM Stack can measure galaxy shear.  The targets algorithms for this framework are in the package meas_modelfit. This package houses both the CModel algorithm -- used to measure galaxy shapes) and the ShapeletPsfApprox Algorithm (SPA) -- used to create a parameterized model of the Psf (point spread function). However, the framework is set up to allow similar tests on other shape measurment algorithms.
 
-The images used for this test were created by GalSim simulations as described below. The galaxy profiles areies parameterized GalSim models. However, the Psfs are not from GalSim models, as we want the framework to accommodate a variety of different realistic and simulated Psfs. A separate psf image for each galaxy is used to simulate the effects of seeing:  this includes both atmospheric and optical effects. 
+ThesShear measurement was done on images created by GalSim simulations. The galaxy profiles are parameterized GalSim models. However, the Psfs are not parameterized GalSim models, as we wanted the framework to be able to accommodate a variety of different realistic and simulated Psfs. A separate psf image for each galaxy is used to simulate the effects of seeing, including both atmospheric and optical effects. 
 
 In these tests, the Psf is modelled using SPA for later use during any measurement process where an estimation of the Psf is required (for example, for Psf weighting).
 
@@ -49,41 +49,47 @@ Our goal is to measure enough simulated galaxies to determine the effect of diff
 DM-5447a – Techniques used in this simulations
 =================================================
 
-Creating the Psf Library:
+Creating the Phosim Psf Library:
 -------------------------
-We used PhoSim to create Psf images for an entire LSST focal plane.  The LSST focal plane is divided into 21 rafts with 9 sensors per raft.  To create a library of Psf images, 10000 positions were selected at random and PhoSim was used to create a stellar image at each position.  After removing unusable stars (those which did not fall fully on any particular sensor, or which were close to another star), between 7000 and 8000 usable stellar images remained for each simulated focal plane.
+PhoSim is an LSST simulator which is used create images of galaxies and stars over the entire LSST focal plane. This simulation includes variations in the atmosphere and the optics (telescope and camera). Please see https://confluence.lsstcorp.org/pages/viewpage.action?pageId=4129126 for a description of this software.
 
-Psf libraries were created for “raw seeing” values of 0.5, 0.7, and 0.9 arcseconds and for LSST filters (f2 and f3).  Most of the tests during this cycle were run using the f2_0.7 library.
+We used PhoSim to create stellar images scattered at random over the LSST focal plane. The LSST focal plane is divided into 21 rafts with 9 sensors per raft.  To create a library of Psf images, 10000 positions were selected at random and PhoSim was instructed to create a stellar image at each position.  After removing unusable stars (those which did not fall fully on any particular sensor, or which were close to another star), between 7000 and 8000 usable stellar images remained for each simulated focal plane.
+
+Psf libraries were created for “raw seeing” values of 0.5, 0.7, and 0.9 arcseconds and for LSST filters (f2 and f3).  Most of the tests during this cycle were run using the f2_0.7 library.  
 
 Using Great3Sims:
 -------------------------
+The great3-public repository (https://github.com/barnabytprowe/great3-public) provided the scripts for selecting a sample of galaxies. This packages creates a catalog of galaxies drawn at random from a distribution of galaxies, and allows us to select a Psf and applied shear for each galaxy.  The output of these scripts is the combination of an "epoch catalog" and a yaml file. The epoch catalog have one line per galaxy, describing the galaxy characteristics and the applied Psf and shear.  The yaml file is used to drive GalSim to make images.
 
-We used the Great3sims package to produce yaml files which in turn drive the GalSim creation of galaxy images.  Great3Sims produces a catalog of galaxies to be constructed using parameterized models and randomly drawn parameters.  A constant shear is then applied for each “subfield”, with the shear and shear angle drawn at random from a specified range.  In this respect, our galaxy sample was the same as that used for the “control” branch of the great3sims test.
+Test Setup A:
+^^^^^^^^^^^^
+This galaxy sample was the same as that used for the control branch of the Great3sims tests. The Great3sims "control/ground/constant�" branch creates images for 200 subfields, each with a constant shear and shear angle.  There are 10000 galaxies in each subfield. 
 
-One important modification to Great3Sims was to allow the point spread function for each galaxy to be sampled for our Psf Library rather than from a parameterized Psf model.  The PhoSim Psf libraries described above were used to select a Psf image  GalSim during the creation of the galaxy images.  So instead of convolving the test galaxies with a parameterized Psf model, we supplied the Psf for each model as a fits image (typically 67x67).  The fits image was supplied to GalSim using the InterpolatedImage input type.
+This setup has 2 million galaxies, and is basically a single sample which was used for all of our comparisons.  However, it is possible to modify this test for different Psf assumptions.  One difference is in the seeing conditions (0.5, 0.7, and 0.9 arcseconds) and filter (f2 or f3) used by PhoSim.  Another variation is to either hold the Psf constant over the entire focal plane, or allow it to vary according to atmosphere and telescope optics.
 
-The great3sims “control/ground/constant” tests provided for 200 subfields, each with a constant shear and shear angle.  There are 10000 galaxies per subfield.  Each subfield is assigned its own shear and shear angle at random.
+One important modification to Great3Sims was to allow the point spread function for each galaxy to be sampled from our PhoSim Library described above. These Psf images were typically 67x67 pixels at the LSST plate scale. The fits image was given to GalSim using the InterpolatedImage input type.
 
-In some of our early tests, we made the subfields smaller (1024 galaxies), but made the number of subfields larger (1024 subfields for each shear value).  This was done in an attempt to sample the error in the absolute value of the shear.  Some of these early tests were also larger (6 million galaxies), which made our tests more sensitive, but possibly not realistic.
+Test Setup B:
+^^^^^^^^^^^^
+In some of our early tests, we made the subfields smaller (1024 galaxies), but made the number of subfields larger (1024 subfields for each shear value).  This was done in an attempt to sample the error in the absolute value of the shear.  Some of these early tests were also larger (6 million or 12 million galaxies), which made our tests more sensitive, but possibly not realistic.
 
 Using GalSim:
 -------------------------
-
-GalSim is driven by the Great3sims program, which creates a yaml file for GalSim. The profile and shear information if supplied for each galaxy through epoch catalog.  Except for the introduction of a Psf image, we did not alter this relationship between Great3sims and GalSim.
+See http://galsim-developers.github.io/GalSim for information about GalSim and how it is used. As discussed above, the Great3Sims package supplies the galaxies parameters in an epoch catalog, as well as a matching yaml file which feeds those parameters to GalSim for image construction. Our only major change was to supply the PhoSim Psf to GalSim as an image. 
 
 The epoch catalog is typically named epoch_catalog-nnn-m.fits, with nnn the ordinal number of the subfield, and m the epoch (always 0 in our tests).  GalSim creates a matching image-nnn-m.fits with a 96x96 pixel image for each galaxy in the sample.
 
 Doing Measurements:
 -------------------------
 
-The goal of the framework is to compare the results of a shape measurement algorithm with the known constant shear values which are produced with the Great3sims/GalSim simulation.  The algorithm must be housed in an lsst.meas.base measurement plugin so that it can be used by the LSST DM Stack.
+The goal of the framework is to compare the results of a shape measurement algorithm with the known constant shear values which stored in the epoch catalog.  The algorithm must be housed in an lsst.meas.base measurement plugin so that it can be used by the LSST DM Stack. And it must produce some measurement, such as second moments, which can be used to calculate galaxy ellipticity.
 
-Our intial tests were with the CModel algorithm in lsst.meas.modelfit package, but this framework could be used to test any shape algorithm which is housed in a measurement plugin.
+Our tests in this study were with the CModel algorithm in lsst.meas.modelfit package, but this framework could be used to test any shape algorithm which is housed in a measurement plugin.
 
 Shear Bias Analysis:
 ====================
 
-We wish to estimate the multiplicative and additive biases of our algorithm for both components of shear. For each shear component, this is done by plotting the measured shear against the applied shear from the epic catalog.  The multiplicative bias is the slope of our regression line, and the additive bias is the intercept.
+We wish to estimate the multiplicative and additive biases of our algorithm for both components of shear. For each shear component, this is done by plotting the measured shear against the applied shear from the epoch catalog.  The multiplicative bias is the slope of our regression line, and the additive bias is the intercept.
 
   .. figure:: /_static/figure_1.png
      :name: figure_1
@@ -96,28 +102,27 @@ In this example, the regression lines lie very close to each other, with the mea
 Comparison of Shear Bias for Different Algorthms:
 -------------------------------------------------
 
-To see how different algorithms measure up against each other, we plot their shear biases against each other.  As in all of these tests, we compare against some measurement standard, and look for a significant change in the multiplicative or additive bias with other algorithms we are testing.
+To see how different algorithms measure up against each other, we plot their shear biases against each other. In these tests we take what we regard as a preferred measurement, in this case a measurement using the entire galaxy cutout (64x64) again two measurements done with much smaller cutout. We assum that the 64x64 measuremnt is the best we can do, and look to see if the multiplicative or additive bias of the other measurements differs from the preferred measurement by a significant amount.
 
-This idea of using one of the algorithms as a measuring stick for the others originally started when we were testing algorithms which took a lot of computing time against “shortcuts”, which were clearly not as accurate but required less time.  For example, one of our tests was to compare measurements which used the full galaxy cutout (in this case 64x64) against measurements which used only a part of the cutout (24x24).  The goal in those test was to see whether a smaller cutout would change the bias, wth the full cutout as a measuring stick.
+This idea of using one of the algorithms as a measuring stick for the others can tell us whether it makes any difference to take the additional computing time to do the larger image.  In this test, the (40x40) cutout is significantly different than the (24x24) cutout.  However, it does not differ from the (64x64) cutout.
 
   .. figure:: /_static/figure_2.png
      :name: figure_2
      :target: _images/figure_2.png
 
-     Comparison of shear bias with different stamp sizes
+     Comparison of shear bias for different algorithms
 
-One  question frequently asked is how this relates to the LSST requirements for achieving a particular accuracy in shear measurement.  The answer is that we have not attempted to calibrate the shear algorithms tested in this study, so our comparisons are only intended to show relative differences between different measurement algorithms.  A further calibration study is probably needed to say more. This study also did not include spatial variation in the Psf, which would be needed for an accurate assessment.
+One  question frequently asked is how this relates to the LSST requirement that we achieve a 3e-3 accuracy in the measurement of the slope, and 5e-4 in intercept.  If we assume that any algorithm can be accurately calibrated, these our errorbars would presumably represent the errors in the calibrated bias.  However, our tests do not tell us how well we meet this requirement.  The size of the error bars certainly indicate something about the resolution of our measurements.  But we don't actually have a way to calibrate our calculation of shear bias.  That depends on the fidelity of the simulations
 
 How errors were determined:
 ---------------------------
 
-In the tests discussed below, we really ran only two simulations.  One was the set of 200 subfields, each subfield having 10000 galaxies with the same applied shear.  The other was a set of 6x1024 subfields at 6 values of total shear, with 1024 galaxies at each rotation angle.
+In the tests discussed below, we really ran only two simulations.  One was the set of 200 subfields, each subfield having 10000 galaxies with the same applied shear, or about 2 million galaxies in all. However, the large number of galaxies are really needed just to beat down the shot noise. Running 10 or even 20 samples of this size and measuring the variation between samples would be a useful technique for estimating the errors in our shear biases measurements.
 
-Looking forward, I would like to run more random simulations which give us a better idea of how our shear biases vary from simulation to simulation.
 
-We calculated our errors in two ways, one using estimators of the errors from each subfield to analytically determine the errors in the slope and intercept measurements. The other was to use a bootstrap technique to see how the bias varied within resampled distributions.
+However, for this study, we did not run multiple instances of the 2 million galaxy simulation, and we calculated our errors by attempting to look at the variation within the shear measurements in each subfield. We calculated our errors in two ways. One was to use estimators of the errors from each subfield to analytically determine the errors in the slope and intercept measurements. The other was to use a bootstrap technique to see how the bias parameters varied within resampled distributions.
 
-1.  The analytic approach
+1. Estimating the error of the mean in each subfield. 
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If (e1,e2) is the measure of the galaxy ellipticity and (g1,g2) is the applied shear, the deviation of (e1-g1,e2-g2) from (0,0) is a measure of our error.  Of course, this measurement is dominated by shape noise. By averaging e1 and e2 over and entire subfield, we get an estimator of the applied shear, as well as the error in this estimation.
@@ -127,11 +132,11 @@ Since the regression to determine m1, c1, m2 and c2 uses as its data the (e1avg,
 2.  Bootstrap estimation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-However, since we did not entirely trust the analytic approach, we attempted to determine the error in our shear bias calculation by running our entire simulation 100-300 times using a bootstrap technique.  That is, we did each subfield measurement again (for each of the 200 subfields) with 5000 galaxy pairs, sampled from the original 5000 galaxy pairs with replacement.  The bootstrap method consistently gives an error which is larger than the analytic approach by a factor of 2.1-2.3.
+However, since we did not entirely trust the approach under (1), we attempted a second approach using bootstrapping to produce different resampled populations of galaxies from out single set of 2 million galaxies. This allowed us to do the shear bias calculation multiple times and observe the variation in the shear parameters on these different populations. The great3sims subfields are actually 5000 galaxy pairs, so our resampling was actually done by drawing from each sample of 5000 with replacement.
 
-Since the bootstrap estimation indicates a larger error, we decided to increase our errors uniformly by a factor of 2.2 for this study.  It would obviously be even better to examine the errors over a large number of simulations.  20 simulations with 2 million galaxies each would probably give us a better handle on both the error in the shear biases, and also an absolute calibration of the shear measurements.
+The bootstrap method consistently gives an error which is larger than the analytic approach by a factor of 2.1-2.3.
 
-
+Since the bootstrap estimation indicates a larger error, we decided to increase our errors uniformly by a factor of 2.2 for this study.
 
 Testing Parameterizations of ShapeletPsfApprox (DM-1136 and DM-4214)
 ========================
@@ -141,9 +146,20 @@ These are a set of tests which are intended to test ShapeletPsfApprox(SPA), and 
 Test setup
 --------------
 
-This set of tests is run using the great3sims configuration of 200 subfields with 10000 galaxies each.  All were run with a single fixed Psf with filter f3 and raw seeing 0.7 arcsec.  The errors shown below are estimated using bootstrap resampling, as discussed in the introduction.  Please note that most of the differences in parameterizations were washed out when the errors were increased by x2.2.  So getting a better estimate of the errors could be important to these results.
+Test Setup A (2 million galaxies)
 
-Finding the best parameterization is a little tricky, as the effects of the parameters are not independent of each other.  To make this comparison more tractable, I've chose to take slices through the parameter space, relying to some extent on the knowledge that the “primary” parameter has the biggest effect, followed by the “wings”.  The “inner” and “outer” seem to have less of an effect.  
+Psf: filter f2 and "raw seeing" 0.7 arcsecs
+
+Single Psf over the focal plane
+
+Error estimation increased by x2.2 as indicated by bootstrap tests.
+
+
+Finding "best" parameterization for ShapeletPsfApprox.
+--------------
+We are hoping to find out how high the order of the estimation parameters must be before our measurement of the bias parameters plateaus.
+
+Comparing parameterization is a little tricky, as the effects of the parameters are not independent of each other.  To make this comparison more tractable, I've chose to take slices through the parameter space, relying to some extent on the knowledge that the “primary” parameter has the biggest effect, followed by the “wings”.  The “inner” and “outer” seem to have less of an effect.  
 
 My first set was to compare parameterizations of the form 0nn0, where n=2,3,4,5,6.  The 3773 parameterization is shown for reference.
 
@@ -187,4 +203,7 @@ Conclusion:
 
 It is hard to draw too many hard conclusions from these studies. For one thing, the models are close enough to each other above order 3 that the accuracy of our error measurement becomes very important. If the 2.2 multiplier which we applied (consistent with the bootstrap resampling) is correct, then orders above 4 not a useful improvement with the 2 million galaxies in this test.
 
-In future studies, we should resample from a larger number of galaxies, so the errors become much more obvious.  Varying the Psf from point-to-point on the focal plane may also have an effect which we have not studied in this set of tests.
+However, it does appear that the order 2 parameterizations are significantly different from 3773, and that order 3 is needed at least in the primary and wings modelling. But there isn't all that much to choose from above order 3.  In fact, 2332 seems to be quite close to 3773, and 3333 is even a little better.
+
+It is obvious that a lot depends on our error assumptions. In future studies, we should create several populations of the same setup to make true variation easier to determine.  Varying the Psf from point-to-point on the focal plane may also have an effect which we have not studied in this set of tests.
+
