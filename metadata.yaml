@@ -34,7 +34,7 @@ version: '1.0'
 copyright: '2016, AURA/LSST'
 
 # Description. A short, 1-2 sentence statemement used by document indices.
-description: 'Writeup of work done in Winter 2016 to test for shear bias in measurements done using CModel and ShapeletPsfApprox from the DM stack.  Tests were done on galaxies of kown shape in the style of great3sims using constant shear.  Psfs applied were produced by PhoSim.'
+description: 'Writeup of work done in Summer 2015 Winter 2016 to test for shear bias in measurements done using CModel and ShapeletPsfApprox from the DM stack.  Tests were done on galaxies of known shape in the style of great3sims using constant shear.  Psfs applied were produced by PhoSim.'
 
 # Abstract, if available
 # abstract: >
