@@ -40,9 +40,9 @@
 
 This document describes a framework which was developed to test DM Stack shape measurement algorithms, as well as to compare algorithm configurations. It can be used with any algorithm housed in a measurement "plugin" as defined by the lsst.meas.base package.  The plugin must produce a result which can be used to calculate galaxy ellipticity.
 
-The algorithms tested in this document are in the meas_modelfit package, which houses both the CModel algorithm -- used to measure galaxy shapes) and the ShapeletPsfApprox Algorithm (SPA) -- used to create a parameterized model of the PSF (point spread function). Our goal was to run both PSF approximation and shape measurement on large numbers of simulated galaxies with known shear and PSF distortions, and to compare the shear measurements produced.
+The algorithms tested in this document are in the meas_modelfit package, which houses both the CModel algorithm -- used to measure galaxy shapes) and the ShapeletPsfApprox Algorithm (SPA) -- used to create a parameterized model of the PSF (point spread function). Our goal was to run both PSF approximation and shape measurement on large numbers of simulated galaxies with known shear and PSF distortions, and to compare the shear measurements produced by diffent configurations of these algorithms.
 
-We hope in the future to test a variety of shape algorithms, including future versions of CModel, which was still under development when the test described here were done. The work described here is therefore of interest for the test techniques developed than for any particular result.
+We hope in the future to test a variety of shape algorithms, including future versions of CModel and SPA. The work described here is more of interest for the test techniques developed than for any particular result.
 
 Techniques used in this simulations
 ===================================
@@ -52,7 +52,7 @@ Galaxy Shear Experiments Scripts
 
 The framework for running these tests can be found in the repository https://github.com/lsst-dm/galaxy_shear_experiments.  The README in this repository contains instructions for running this code.
 
-The Python scripts were used to automate the production of simulation images, running the shape measurement algorithm, and analysis for shear bias. The scripts can be used in single process mode, in a parallel processing mode on multiple core machines, or with a batch system such as the SLAC Batch Farm.
+Python scripts were used to automate the production of simulation images, the running of the measurement algorithm, and the analysis of the measured shear. The scripts allow single process mode, a parallel process mode on multiple core machines, and batch processing with a system such as the SLAC Batch Farm.
 
 Test configurations and the PSF libraries actually used are not currently part of this repository, but will be added in the future. Scripts for parallel processing at SLAC will also be added as they are completed.
  
@@ -63,9 +63,9 @@ The great3-public repository (https://github.com/barnabytprowe/great3-public) pr
 
 Branch Setup:
 ^^^^^^^^^^^^^
-The galaxy samples were selected using the great3sims "control/ground/constant" branch. This branch specifies its galaxies in "subfields", where a subfield is just a group of galaxies with the same applied shear. The size of the postage stamps and the number of galaxies per subfield is configurable.  Details of the configuration used are described with each test below.
+The galaxy samples were selected using the great3sims "control/ground/constant" branch. This branch creates groups of galaxies in "subfields", where all galaxies in a subfield have the same applied shear. The size of the postage stamps and the number of galaxies per subfield is configurable.  Details of the configuration used are described with each test below.
  
-Note that all of our simulations, the galaxies are created as 90 degree rotated pairs to reduce shape noise.
+Note that in all of our simulations, the galaxies are created as 90 degree rotated pairs to reduce shape noise.
 
 One important modification to great3Sims was to sample the PSF for each galaxy from a PhoSim PSF Library (described below). Ordinarily, great3sims supplies the PSF specification to GalSim as a parameterized model. We suppled our own PSF libraries (a set of 67x67 pixel images at the LSST plate scale), using the GalSim InterpolatedImage type.
 
@@ -158,15 +158,17 @@ The bootstrap method consistently gives an error which is larger than the analyt
 
 Since the ratio of the two was roughly constant and the calculated error is easier to get, we uniformly took as our error the calculated error multiplied by 2.2.
 
-Testing Parameterizations of ShapeletPsfApprox (DM-1136 and DM-4214)
+Testing Parameterizations of ShapeletPsfApprox
 ====================================================================
 
-This set set of tests were intended to test ShapeletPsfApprox(SPA), and in particular, to find out how high the shapelet orders have to be to produce a stable PSF estimation.  SPA is a four component “multi-shapelet function” model of the PSF, where the four components (from narrowest to broadest) are named “inner”, “primary”, “wings”, and “outer”.  An SPA model is designated in this document with four numbers:  for example, 1234 means inner order = 1, primary order = 2, wings order = 3, and outer order = 4.
+These tests were done under issues DM-1136 and DM-4214.  To assess computational demands, we tested ShapeletPsfApprox (SPA) to find out how low the SPA fits orders can be without substantially affecting the quality of the PSF estimate. SPA is a four component “multi-shapelet function” model of the PSF, where the four components (from narrowest to broadest) are named “inner”, “primary”, “wings”, and “outer”.  An SPA model is designated in this document with four numbers:  for example, 1234 means inner order = 1, primary order = 2, wings order = 3, and outer order = 4.
+
+In our earlier graph, SingleGaussian is -0--, Double Gaussian is -00-, and Full is 0440. ('-' means that no value was fit for the component).
 
 Test setup
 --------------
 
-Subfields: 100x100 (10000 galaxies in 5000 pairs). A total of 200 subfields for each test, with g1 and g2 selected from the great3sims default distribution.
+Subfields: 100x100 (10000 galaxies in 5000 pairs). A total of 200 subfields for each test, with g1 and g2 selected as in the great3sims control/ground/constant branch.
 
 PSF: filter f2 (r) and "raw seeing" 0.7 arcsecs. Single PSF selected from f2_0.7 PhoSim library.
 
@@ -175,21 +177,20 @@ Error estimation increased by multiplying the calculated error by 2.2.  This cor
 
 Finding "best" parameterization for ShapeletPsfApprox
 -----------------------------------------------------
-We are hoping to find out how high the order of the estimation parameters must be before our measurement of the bias parameters plateaus.
 
 Comparing parameterizations is a little tricky, as the effects of the parameters are not independent of each other.  To make this comparison more tractable, I've chose to take slices through the parameter space, relying to some extent on the previous experience that the “primary” parameter has the biggest effect, followed by the “wings”.  The “inner” and “outer” seem to have less of an effect.  
 
-My first set was to compare parameterizations of the form 0nn0, where n=2,3,4,5,6.  The 3773 parameterization is shown for reference.
+The first trial was to compare parameterizations of the form 0nn0, where n=2,3,4,5.  The 3773 parameterization is shown for reference.
 
   .. figure:: /_static/figure_4.png
      :name: figure_4
      :target: _images/figure_4.png
 
-     Parameterizations of the form 0nn0.  Full is 0220
+     Parameterizations of the form 0nn0.
 
 .. literalinclude:: /_static/table_1.txt
 
-Things appear to settle around 0440 or 0550.  But none of these differ from the reference model by 3 sigma.
+The results appear to get better up to 0550. However, none of the models above 0330 differ from the 3773 model are different at the 3 sigma level.
 
 However, note the similar comparisons with inner and outer set to 2 or 3. The primary and wings settings seem to settle by order 4 with higher order in the inner and outer components.
 
@@ -229,7 +230,7 @@ Our earliest tests were tests of CModel configurations. For these tests, the SPA
 
 We reproduce here a couple of results having to do with the size of the measurement area used by the CModel algorithm.
 
-These tests were also useful is assessing how many galaxies would be needed to see significant differences. As a result of these these tests, we decided to move our tests for single host, multi-core machines at Davis to the computing farm at SLAC, as large galaxy populations were seen to be needed. 
+These tests were also useful in assessing how many galaxies would be needed to see significant differences. As a result of these these tests, we decided to move our tests from single host, multi-core machines at Davis to the computing farm at SLAC, as larger galaxy populations were seen to be needed. 
 
 Test setup
 ----------
@@ -245,7 +246,7 @@ Test Descriptions:
 ------------------
 Initially, the test was done with 128 subfields at 6 shear values (.0001, .01, .02, .03, .04, .06), for a total of 786,432 galaxies.
 
-When these intial tests were not sensitive enough, tests of 1024 subfields and later 2048 subfields were tried (up to 6 million galaxies).
+When these intial tests were not sensitive enough, tests of 1024 subfields and later 2048 subfields were tried (up to 12 million galaxies).
 
 The results of the earlier tests were published with the Summer 2015 issues, DM-3375 and DM-1135. These tests showed obvious trends, but did not have large enough galaxy samples to display significant pair-wise differences. 
 
