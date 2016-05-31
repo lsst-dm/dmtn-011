@@ -87,7 +87,14 @@ PhoSim (version 3.4.2) is a ray tracing simulator which is used create images of
 
 We used PhoSim to create stellar images scattered at random over the LSST focal plane. The LSST focal plane is divided into 21 rafts with 9 sensors per raft.  To create a library of PSF images, 10000 positions were selected at random and PhoSim was instructed to create a stellar image at each position.  After removing unusable stars (those which did not fall fully on any particular sensor, or which were close to another star), between 7000 and 8000 usable stellar images remained for each PSF library.
 
+  .. figure:: /_static/sample.psf.png
+     :name: sample.psf
+     :target: _images/sample.psf.png
+
+     Psf created by PhoSim (67 x 67)
+
 PSF libraries were created for "raw" seeing values of 0.5, 0.7, and 0.9 arcseconds through LSST filters f2 and f3 (r and i). The measured FWHM for these stellar images is actually somewhat worse after all the simulated distortions are applied. 
+
 
 Most of the tests during this cycle were run using the f2_0.7 or f3_0.7 libraries.  
 
@@ -157,6 +164,27 @@ We did not entirely trust the approach under (1), so we used bootstrap resamplin
 The bootstrap method consistently gives an error which is larger than the analytic approach by a factor of 2.1-2.3.
 
 Since the ratio of the two was roughly constant and the calculated error is easier to get, we uniformly took as our error the calculated error multiplied by 2.2.
+
+3.  Error estimation with 10 realizations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+10 runs of 2 million galaxies were run
+
+  .. figure:: /_static/figure_8.png
+     :name: figure_8
+     :target: _images/figure_8.png
+
+     Comparison of 10 realizations of the great3sims test
+
+Here are the statistics for the 10 runs.  The values shown in parentheses are the standard deviations after calibrating the measurement to a slope of 1.0.
+
+M1: 1.51109 +- 0.00562 (3.72e-3) range: 0.02061
+
+B1: 0.00105 +- 0.00019 (1.25e-4) range: 0.00055
+
+M2: 1.49777 +- 0.00574 (3.83e-3) range: 0.01560
+
+B2: 0.00049 +- 0.00019 (1.24e-4) range: 0.00059
 
 Testing Parameterizations of ShapeletPsfApprox
 ====================================================================
