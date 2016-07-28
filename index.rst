@@ -8,7 +8,7 @@ The viability of this approach depends crucially on the number of shapelet expan
 
 This document describes a set of tests designed to investigate the viability of this approach, which depends on both our ability to represent the as-built LSST PSF with the multi-shapelet approach and the sensitivity of the shear measurements algorithm to inaccuracy in the PSF approximation.  Given that neither the as-built LSST PSF nor a mature shear estimation algorithm based on this approach is available, these tests are very much preliminary; our goal is simply to investigate whether this approach merits future development, given LSST's computational budget and science requirements.
 
-We rely on the LSST `PhoSim`_ image simulator to generate an image of the PSF, which we then convolve with analytic galaxy models using `GalSim`_ (GalSim is much faster and easier to use than PhoSim, but lacks the ability to generate LSST PSF images on its own).  These are then processed using the **CModel** galaxy-fitting algorithm, which uses a multi-shapelet PSF approximation determined by a fitter we simply call **ShapeletPsfApprox** (SPA).  **CModel** was developed for the purpose of measuring galaxy colors, not shapes, but we can nevertheless make use of it here by noting that we are interested only in the change in shear estimation biases as we change the quality of the PSF approximation; any absolute bias in the **CModel** algorithm should simply cancel out.
+We rely on the LSST `PhoSim`_ image simulator to generate an image of the PSF, which we then convolve with analytic galaxy models using `GalSim`_ (GalSim is much faster and easier to use than PhoSim, but lacks the ability to generate LSST PSF images on its own).  These are then processed using the *CModel* galaxy-fitting algorithm, which uses a multi-shapelet PSF approximation determined by a fitter we simply call *ShapeletPsfApprox* (SPA).  *CModel* was developed for the purpose of measuring galaxy colors, not shapes, but we can nevertheless make use of it here by noting that we are interested only in the change in shear estimation biases as we change the quality of the PSF approximation; any absolute bias in the *CModel* algorithm should simply cancel out.
 
 .. _PhoSim: https://www.lsst.org/scientists/simulations/phosim
 
@@ -73,7 +73,7 @@ Processing Framework
 
 The goal of the framework is to compare the results of some shape measurement plugin with the known shear values which stored in the epoch catalog.  The algorithm must be housed in an lsst.meas.base measurement plugin,  and it must produce either measure ellipticity, or some other value (e.g., second moments) which can be used to calculate ellipticity.
 
-Our tests in this study were with the **CModel** algorithm with PSF modelling using **ShapeletPsfApprox**. The way in which these measurements are run is described in the galaxy_shear_experiments README.
+Our tests in this study were with the *CModel* algorithm with PSF modelling using *ShapeletPsfApprox*. The way in which these measurements are run is described in the galaxy_shear_experiments README.
 
 Shear Bias Analysis
 ===================
@@ -102,7 +102,7 @@ Of the 10000 galaxies in each subfield, a small percentage could not be measured
 Comparison of Shear Bias for Different Algorithms
 -------------------------------------------------
 
-To see how different algorithms measure up, we plot their shear biases against each other. The plot shown below is a comparison of different parameterizations of the **ShapeletPsfApprox** (SPA) algorithm. Here, we compare a high order fit of the PSF (3773) against three lower order fits: SingleGaussian, DoubleGaussian, and Full. These are the predefined SPA parameterizations, and will be described in more detail later in this document.
+To see how different algorithms measure up, we plot their shear biases against each other. The plot shown below is a comparison of different parameterizations of the *ShapeletPsfApprox* (SPA) algorithm. Here, we compare a high order fit of the PSF (3773) against three lower order fits: SingleGaussian, DoubleGaussian, and Full. These are the predefined SPA parameterizations, and will be described in more detail later in this document.
 
   .. figure:: /_static/figure_3.png
      :name: figure_3
@@ -156,10 +156,10 @@ M2: 1.49777 +- 0.00574 (3.83e-3) range: 0.01560
 
 B2: 0.00049 +- 0.00019 (1.24e-4) range: 0.00059
 
-Testing Parameterizations of **ShapeletPsfApprox**
-==============================================
+Testing Parameterizations of *ShapeletPsfApprox*
+================================================
 
-These tests were done under issues DM-1136 and DM-4214.  To assess computational demands, we tested **ShapeletPsfApprox** (SPA) to find out how low the SPA fits orders can be without substantially affecting the quality of the PSF estimate. SPA is a four component “multi-shapelet function” model of the PSF, where the four components (from narrowest to broadest) are named “inner”, “primary”, “wings”, and “outer”.  An SPA model is designated in this document with four numbers:  for example, 1234 means inner order = 1, primary order = 2, wings order = 3, and outer order = 4.
+These tests were done under issues DM-1136 and DM-4214.  To assess computational demands, we tested *ShapeletPsfApprox* (SPA) to find out how low the SPA fits orders can be without substantially affecting the quality of the PSF estimate. SPA is a four component “multi-shapelet function” model of the PSF, where the four components (from narrowest to broadest) are named “inner”, “primary”, “wings”, and “outer”.  An SPA model is designated in this document with four numbers:  for example, 1234 means inner order = 1, primary order = 2, wings order = 3, and outer order = 4.
 
 In our earlier graph, SingleGaussian is -0--, Double Gaussian is -00-, and Full is 0440. ('-' means that no value was fit for the component).
 
@@ -173,8 +173,8 @@ PSF: filter f2 (r) and "raw seeing" 0.7 arcsecs. Single PSF selected from f2_0.7
 Error estimation increased by multiplying the calculated error by 2.2.  This correction was indicated by bootstrap tests.
 
 
-Finding "Best" Parameterization for **ShapeletPsfApprox**
------------------------------------------------------
+Finding "Best" Parameterization for *ShapeletPsfApprox*
+-------------------------------------------------------
 
 Comparing parameterizations is a little tricky, as the effects of the parameters are not independent of each other, resulting in a very high-dimensional parameter space that is difficult to explore.  To make this comparison more tractable, I've chose to take slices through the parameter space, relying to some extent on the previous experience that the “primary” parameter has the biggest effect, followed by the “wings”.  The “inner” and “outer” seem to have less of an effect.
 
@@ -215,12 +215,27 @@ Here is a full set of comparisons against 3773 where primary and wings are the s
 
 .. literalinclude:: /_static/table_2.txt
 
+
 Conclusion
 ----------
+
 The tests clearly favor order 3 parameterizations or higher, with 3333 within the errorbars of 3773.  It also appears that it is important to have at least order 2 in the inner and outer components.
 
 It is obvious that a lot depends on our error assumptions. Most of the parameterizations at order 3 or higher do not appear to be significantly different, but would be without the 2.2x error multiplier.
 
+
+Summary
+=======
+
+There are two tolance levels at play in these tests: the accuracy needed to avoid degrading LSST's statistical power in weak lensing\ [#1]_ (approximately :math:`m < 10^{-3}` and :math:`c < 5\times 10^{-4}`) and the precision of the simulations (determined by the number of galaxies in them).  These simulations are not quite precise enough to test whether we meet these tolerances on :math:`m` and :math:`c`.
+
+The result is that the result of this round of tests is largely indeterminate: we cannot yet guarantee that multi-shapelet PSF approximation will be a viable approach to PSF-convolved galaxy evaluation for LSST, but we cannot rule it out either.  The 3333 approximation parametrization identified as "best" in these tests is at the high end of what is computationally feasible, but the statistical significance preferring this approximation over simpler ones is not high.
+
+While we could expand the simulations further to increase their accuracy, the differences we currently see between different parameterizations of multi-shapelet approximations are subtle enough to suggest that this would be premature; other innaccuracies in this test setup are as likely to be important at this level as the number of galaxies in the simulation.  The next round of tests should use a more sophisticated, shear-oriented galaxy fitting code than *CModel*, a more robust approximation code than the current *ShapeletPsfApprox*, and ideally utilize PSF images from precursor data as well as multiple image simulators (unless LSST commissioning data is available).  The testing framework developed here should be directly usable for those extensive tests, but we have considerable development work to do on algorithms and simulations before it would make sense to carry them out.
+
+In the meantime, the result of these tests is that we should continue algorithm development of both the multi-shapelet PSF approximation approach and at least some alternatives to it.  In fact, before running a larger suite of shear accuracy tests, we should almost certainly develop highly-optimized codes for multiple PSF-convolved galaxy model evaluation methods, and see if a difference in computational performance between approaches allows us to reject some approaches on that criteria.
+
+.. [#1] These are *not* LSST system requirements, but rather broadly agreed-upon estimates from LSST science collaborations such as the DESC.  There is no LSST system requirement on shear estimation.
 
 References
 ==========
@@ -231,12 +246,12 @@ References
 
 
 
-Appendix: Testing **CModel** Configuration
-=========================================
+Appendix: Testing *CModel* Configuration
+========================================
 
-Our earliest tests were tests of **CModel** configurations. For these tests, the SPA was held at its defaults, and **CModel** was run through a range of its configuration values.
+Our earliest tests were tests of *CModel* configurations. For these tests, the SPA was held at its defaults, and *CModel* was run through a range of its configuration values.
 
-We reproduce here a couple of results having to do with the size of the measurement area used by the **CModel** algorithm.
+We reproduce here a couple of results having to do with the size of the measurement area used by the *CModel* algorithm.
 
 These tests were also useful in assessing how many galaxies would be needed to see significant differences. As a result of these these tests, we decided to move our tests from single host, multi-core machines at Davis to the computing farm at SLAC, as larger galaxy populations were seen to be needed. 
 
@@ -265,7 +280,7 @@ The results shown below were done for DM-3983, which was a retest with 1024 subf
 nGrowFootprint Test
 ^^^^^^^^^^^^^^^^^^^
 
-In this test, the nGrowFootprint configuration of **CModel** was varied from 0 to 10. The meas_base measurement algorithm starts with a galaxy "footprint", which is derived from the set of pixels above the detection threshold.  This default footprint is used when nGrowFootprint = 0.  For positive values of nGrowFootprint, the measurement area is expanded in all directions by that amount. Values of nGrowFootprint which would extend the footprint beyond the bounds of the original postage stamp are not allowed.
+In this test, the nGrowFootprint configuration of *CModel* was varied from 0 to 10. The meas_base meas*ShapeletPsfApprox*urement algorithm starts with a galaxy "footprint", which is derived from the set of pixels above the detection threshold.  This default footprint is used when nGrowFootprint = 0.  For positive values of nGrowFootprint, the measurement area is expanded in all directions by that amount. Values of nGrowFootprint which would extend the footprint beyond the bounds of the original postage stamp are not allowed.
 
   .. figure:: /_static/nGrow.larger.png
      :name: nGrow.larger 
@@ -276,7 +291,7 @@ In this test, the nGrowFootprint configuration of **CModel** was varied from 0 t
 Stampsize Test
 ^^^^^^^^^^^^^^
 
-In this test, the measurement footprint was always a square, regardless of the contours of the actual galaxy.  The same GalSim images were used in all these tests, but the stampsize was decreased in software by trimming the postage stamps provided to the **CModel** algorithm.  The original galaxy postage stamps created by GalSim were 96x96 at the LSST plate scale.  Test were run from 20x20 to 96x96. The values for 20, 40, and 64 are shown below.
+In this test, the measurement footprint was always a square, regardless of the contours of the actual galaxy.  The same GalSim images were used in all these tests, but the stampsize was decreased in software by trimming the postage stamps provided to the *CModel* algorithm.  The original galaxy postage stamps created by GalSim were 96x96 at the LSST plate scale.  Test were run from 20x20 to 96x96. The values for 20, 40, and 64 are shown below.
 
   .. figure:: /_static/stampsize.larger.png
      :name: stampsize.larger
