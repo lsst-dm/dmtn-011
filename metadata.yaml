@@ -20,11 +20,13 @@ authors:
     - 'Perry Gee'
 
 # Current document version
-last_revised: '2016-04-01'
+# Based on git commit date commented; uncomment to explicitly specify
+# last_revised: '2016-04-01'
 
 # Version. Use Semvar, e.g., 1.0, including .dev, as necessary
 # This version string should correspond to the git tag when the document is published on Zenodo
-version: '1.0'
+# Based on git branch/tag when commented; uncomment to explicitly specify
+# version: '1.0'
 
 # Digital Object Identifier (DOI). Uncomment if available.
 # Keep this DOI updated as new releases are pushed to Zenodo
