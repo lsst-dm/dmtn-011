@@ -1,48 +1,19 @@
-..  Content of technical report.
-
-  See http://docs.lsst.codes/en/latest/development/docs/rst_styleguide.html
-  for a guide to reStructuredText writing.
-
-  Do not put the title, authors or other metadata in this document;
-  those are automatically added.
-
-  Use the following syntax for sections:
-
-  Sections
-  ========
-
-  and
-
-  Subsections
-  -----------
-
-  and
-
-  Subsubsections
-  ^^^^^^^^^^^^^^
-
-  To add images, add the image file (png, svg or jpeg preferred) to the
-  _static/ directory. The reST syntax for adding the image is
-
-  .. figure:: /_static/filename.ext
-     :name: fig-label
-     :target: http://target.link/url
-
-     Caption text.
-
-   Run: ``make html`` and ``open _build/html/index.html`` to preview your work.
-   See the README at https://github.com/lsst-sqre/lsst-report-bootstrap or
-   this repo's README for more info.
-
-   Feel free to delete this instructional comment.
-
 :tocdepth: 1
 
-This document describes a framework which was developed to test DM Stack shape measurement algorithms, as well as to compare algorithm configurations. It can be used with any algorithm housed in a measurement "plugin" as defined by the lsst.meas.base package.  The plugin must produce a result which can be used to calculate galaxy ellipticity.
+One of the most computationally expensive tasks in LSST's data release processing is fitting PSF-convolved galaxy models to image data.  The science requirements on this fitting are largely driven by weak graviational lensing; while there are many approaches to shear estimation for weak lensing, and it is hard to predict the state of the art a decade from now, the most advanced algorithms today use Monte Carlo or brute-force sampling of the posterior probability of PSF-convolved galaxy models.  The computational cost of these algorithms is dominated by the cost of evaluating an image of a PSF-convolved galaxy model at a given point in parameter space, and while several approaches to PSF/galaxy convolution exist, all computationally feasible approaches require some approximations that may introduce subtle biases into shear estimation.
 
-The algorithms tested in this document are in the meas_modelfit package, which houses both the CModel algorithm -- used to measure galaxy shapes) and the ShapeletPsfApprox Algorithm (SPA) -- used to create a parameterized model of the PSF (point spread function). Our goal was to run both PSF approximation and shape measurement on large numbers of simulated galaxies with known shear and PSF distortions, and to compare the shear measurements produced by diffent configurations of these algorithms.
+This document describes tests on one of these approaches, in which galaxy models are expanded as a linear combination of co-elliptical Gaussians and PSFs are approximated as a linear combination of multiple "shapelet" (Gauss-Hermite) functions.  This extends the approach used in the "ngmix" algorithm ([Jarvis2016]_, [Sheldon2014]_), which uses the same galaxy models and a Gaussian mixture to evaluate the PSF; our multi-shapelet approach replaces each Gaussian in such a mixture with a sum of Gaussian-polynomial products.
 
-We hope in the future to test a variety of shape algorithms, including future versions of CModel and SPA. The work described here is more of interest for the test techniques developed than for any particular result.
+The viability of this approach depends crucially on the number of shapelet expansions required in the PSF approximation and the polynomial order of each of these; a large number of high-order expansions is too computationally expensive, while a simpler expansion may not adequately capture details of the PSF and hence introduce systematic errors.
+
+This document describes a set of tests designed to investigate the viability of this approach, which depends on both our ability to represent the as-built LSST PSF with the multi-shapelet approach and the sensitivity of the shear measurements algorithm to inaccuracy in the PSF approximation.  Given that neither the as-built LSST PSF nor a mature shear estimation algorithm based on this approach is available, these tests are very much preliminary; our goal is simply to investigate whether this approach merits future development, given LSST's computational budget and science requirements.
+
+We rely on the LSST `PhoSim`_ image simulator to generate an image of the PSF, which we then convolve with analytic galaxy models using `GalSim`_ (GalSim is much faster and easier to use than PhoSim, but lacks the ability to generate LSST PSF images on its own).  These are then processed using the *CModel* galaxy-fitting algorithm, which uses a multi-shapelet PSF approximation determined by a fitter we simply call *ShapeletPsfApprox*.  *CModel* was developed for the purpose of measuring galaxy colors, not shapes, but we can nevertheless make use of it here by noting that we are interested only in the change in shear estimation biases as we change the quality of the PSF approximation; any absolute bias in the *CModel* algorithm should simply cancel out.
+
+.. _PhoSim: https://www.lsst.org/scientists/simulations/phosim
+
+.. _GalSim: https://github.com/GalSim-developers/GalSim
+
 
 Techniques used in this simulations
 ===================================
@@ -309,3 +280,10 @@ We were able to show significant differences in measured shear values, both by a
 The original 768K galaxy sample was not large enough to show these differences.  A much larger study of 6 million galaxies was adequate.
 
 We did not pursue just how large the galaxy population had to be, or exactly what values of these two tests were optimal.
+
+References
+----------
+
+.. [Jarvis2016] Jarvis, Sheldon, Zuntz, et al. 2016, *The DES Science Verification weak lensing shear catalogues.*  MNRAS, 460, 2245.  http://adsabs.harvard.edu/abs/2016MNRAS.460.2245J
+
+.. [Sheldon2014] Sheldon 2016, *An implementation of Bayesian lensing shear measurement.*  MNRAS, 444, L25.  http://adsabs.harvard.edu/abs/2014MNRAS.444L..25S
