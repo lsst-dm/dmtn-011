@@ -20,11 +20,13 @@ authors:
     - 'Perry Gee'
 
 # Current document version
-last_revised: '2016-04-01'
+# Based on git commit date commented; uncomment to explicitly specify
+# last_revised: '2016-04-01'
 
 # Version. Use Semvar, e.g., 1.0, including .dev, as necessary
 # This version string should correspond to the git tag when the document is published on Zenodo
-version: '1.0'
+# Based on git branch/tag when commented; uncomment to explicitly specify
+# version: '1.0'
 
 # Digital Object Identifier (DOI). Uncomment if available.
 # Keep this DOI updated as new releases are pushed to Zenodo
@@ -34,7 +36,7 @@ version: '1.0'
 copyright: '2016, AURA/LSST'
 
 # Description. A short, 1-2 sentence statemement used by document indices.
-description: 'Writeup of work done in Winter 2016 to test for shear bias in measurements done using CModel and ShapeletPsfApprox from the DM stack.  Tests were done on galaxies of kown shape in the style of great3sims using constant shear.  Psfs applied were produced by PhoSim.'
+description: 'Writeup of work done in Summer 2015 Winter 2016 to test for shear bias in measurements done using CModel and ShapeletPsfApprox from the DM stack.  Tests were done on galaxies of known shape in the style of great3sims using constant shear.  Psfs applied were produced by PhoSim.'
 
 # Abstract, if available
 # abstract: >
