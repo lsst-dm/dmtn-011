@@ -1,5 +1,9 @@
 :tocdepth: 1
 
+.. note::
+
+   This technote is a partial attempt to summarize an effort to characterize the viability of one approach to approximating and convolving PSF models.  This work was ended when it became apparent the result would be inconclusive (in that a conclusive result would require the re-running these tests after sort of significant algorithm development we hoped this preliminary study would be able to either encourage or reject).  Accordingly, this note describing the outcome is not as rigorous or as careful as it would have been if a conclusive result had been a possibility.
+
 One of the most computationally expensive tasks in LSST's data release processing is fitting PSF-convolved galaxy models to image data.  The science requirements on this fitting are largely driven by weak graviational lensing; while there are many approaches to shear estimation for weak lensing, and it is hard to predict the state of the art a decade from now, the most advanced algorithms today use Monte Carlo or brute-force sampling of the posterior probability of PSF-convolved galaxy models.  The computational cost of these algorithms is dominated by the cost of evaluating an image of a PSF-convolved galaxy model at a given point in parameter space, and while several approaches to PSF/galaxy convolution exist, all computationally feasible approaches require some approximations that may introduce subtle biases into shear estimation.
 
 This document describes tests on one of these approaches, in which galaxy models are expanded as a linear combination of co-elliptical Gaussians and PSFs are approximated as a linear combination of multiple "shapelet" (Gauss-Hermite) functions.  This extends the approach used in the "ngmix" algorithm ([Jarvis2016]_, [Sheldon2014]_), which uses the same galaxy models and a Gaussian mixture to evaluate the PSF; our multi-shapelet approach replaces each Gaussian in such a mixture with a sum of Gaussian-polynomial products.
